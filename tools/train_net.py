@@ -112,8 +112,9 @@ if __name__ == '__main__':
 
     print args.imdb_name
     if args.imdb_name == "MSRA_TRAIN":
-	output_dir = "."
-	roidb = get_rroidb("train")
+        output_dir = "."
+        roidb = get_rroidb("train")
+        print len(roidb)
     else:
         imdb, roidb = combined_roidb(args.imdb_name)
         print ('{:d} roidb entries'.format(len(roidb)))

@@ -3,6 +3,9 @@ import numpy as np
 
 #[ctr_x, ctr_y, height, width, angle] anti-clock-wise arc
 def rbbox_transform(ex_rois, gt_rois):
+
+        #print ex_rois
+        #print gt_rois
 	ex_widths = ex_rois[:, 3] 
 	ex_heights = ex_rois[:, 2] 
 	ex_ctr_x = ex_rois[:, 0]
@@ -15,10 +18,17 @@ def rbbox_transform(ex_rois, gt_rois):
 	gt_ctr_y = gt_rois[:, 1]
 	gt_angle = gt_rois[:, 4]
 
+        
+
 	targets_dx = (gt_ctr_x - ex_ctr_x)*1.0 / ex_widths
     	targets_dy = (gt_ctr_y - ex_ctr_y)*1.0 / ex_heights
     	targets_dw = np.log(gt_widths*1.0 / ex_widths)
     	targets_dh = np.log(gt_heights*1.0 / ex_heights)
+
+	#print "gt_widths", gt_widths
+        #print "ex_widths", ex_widths
+	#print "targets_dw",targets_dw
+        #print "ex_angle",ex_angle
 
 	#ex_angle = np.pi / 180 * ex_angle
 	#gt_angle = np.pi / 180 * gt_angle
@@ -43,6 +53,10 @@ def rbbox_transform_inv(boxes, deltas):
         	return np.zeros((0, deltas.shape[1]), dtype=deltas.dtype)
 
     	boxes = boxes.astype(deltas.dtype, copy=False)
+        #print "deltas",deltas
+
+
+        param = np.log(1000. / 16.)
 
 	widths = boxes[:, 3]
 	heights = boxes[:, 2]
@@ -56,6 +70,9 @@ def rbbox_transform_inv(boxes, deltas):
     	dw = deltas[:, 2::5]
    	dh = deltas[:, 3::5]
 	da = deltas[:, 4::5]
+
+        dw = np.minimum(dw, param)
+        dh = np.minimum(dh, param)
 
 	
     	pred_ctr_x = dx * widths[:, np.newaxis] + ctr_x[:, np.newaxis]

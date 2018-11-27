@@ -35,7 +35,7 @@ __C.TRAIN = edict()
 
 # Scales to use during training (can list multiple scales)
 # Each scale is the pixel size of an image's shortest side
-__C.TRAIN.SCALES = (600,)
+__C.TRAIN.SCALES = (480,600,800)
 
 # Max pixel size of the longest side of a scaled input image
 __C.TRAIN.MAX_SIZE = 1000
@@ -58,7 +58,7 @@ __C.TRAIN.BG_THRESH_HI = 0.5
 __C.TRAIN.BG_THRESH_LO = 0.1
 
 # Use horizontally-flipped images during training?
-__C.TRAIN.USE_FLIPPED = True
+__C.TRAIN.USE_FLIPPED = False
 
 # Train bounding-box regressors
 __C.TRAIN.BBOX_REG = True
@@ -132,7 +132,7 @@ __C.TEST = edict()
 
 # Scales to use during testing (can list multiple scales)
 # Each scale is the pixel size of an image's shortest side
-__C.TEST.SCALES = (1000,)
+__C.TEST.SCALES = (740,)
 
 # Max pixel size of the longest side of a scaled input image
 __C.TEST.MAX_SIZE = 1700
@@ -155,7 +155,7 @@ __C.TEST.HAS_RPN = True
 __C.TEST.PROPOSAL_METHOD = 'selective_search'
 
 ## NMS threshold used on RPN proposals
-__C.TEST.RPN_NMS_THRESH = 0.7
+__C.TEST.RPN_NMS_THRESH = 0.85
 ## Number of top scoring boxes to keep before apply NMS to RPN proposals
 __C.TEST.RPN_PRE_NMS_TOP_N = 6000
 ## Number of top scoring boxes to keep after applying NMS to RPN proposals
@@ -230,10 +230,10 @@ __C.TRAIN.R_NEGATIVE_ANGLE_FILTER = 15
 __C.TRAIN.GT_MARGIN = 1.4
 __C.TEST.GT_MARGIN = 1.4
 
-# image border padding 
+# image border padding
 __C.IMG_PADDING = 0.25
 
-# anchor setting on testing 
+# anchor setting on testing
 __C.TEST.RATIO_GROUP = [0.2, 0.5, 1.0]
 __C.TEST.SCALE_GROUP = []
 __C.TEST.ANGLE_GROUP = []

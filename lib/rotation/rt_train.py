@@ -34,7 +34,7 @@ class SolverWrapper(object):
             # RPN can only use precomputed normalization because there are no
             # fixed statistics to compute a priori
             assert cfg.TRAIN.RBBOX_NORMALIZE_TARGETS_PRECOMPUTED
-	
+
 
         if cfg.TRAIN.BBOX_REG:
             print 'Computing bounding-box regression targets...'
@@ -60,21 +60,31 @@ class SolverWrapper(object):
         """
         net = self.solver.net
 
+        keys = net.params.keys()[::-1]
+
+        bbox_pred_key = "bbox_pred"
+
+        for key in keys:
+            if bbox_pred_key in key:
+                print "bbox_pred_key",key
+                bbox_pred_key = key
+                break
+
         scale_bbox_params = (cfg.TRAIN.BBOX_REG and
                              cfg.TRAIN.BBOX_NORMALIZE_TARGETS and
-                             net.params.has_key('bbox_pred'))
+                             net.params.has_key(bbox_pred_key))
 
         if scale_bbox_params:
             # save original values
-            orig_0 = net.params['bbox_pred'][0].data.copy()
-            orig_1 = net.params['bbox_pred'][1].data.copy()
+            orig_0 = net.params[bbox_pred_key][0].data.copy()
+            orig_1 = net.params[bbox_pred_key][1].data.copy()
 
             # scale and shift with bbox reg unnormalization; then save snapshot
-            net.params['bbox_pred'][0].data[...] = \
-                    (net.params['bbox_pred'][0].data *
+            net.params[bbox_pred_key][0].data[...] = \
+                    (net.params[bbox_pred_key][0].data *
                      self.bbox_stds[:, np.newaxis])
-            net.params['bbox_pred'][1].data[...] = \
-                    (net.params['bbox_pred'][1].data *
+            net.params[bbox_pred_key][1].data[...] = \
+                    (net.params[bbox_pred_key][1].data *
                      self.bbox_stds + self.bbox_means)
 
         infix = ('_' + cfg.TRAIN.SNAPSHOT_INFIX
@@ -88,8 +98,8 @@ class SolverWrapper(object):
 
         if scale_bbox_params:
             # restore net to original state
-            net.params['bbox_pred'][0].data[...] = orig_0
-            net.params['bbox_pred'][1].data[...] = orig_1
+            net.params[bbox_pred_key][0].data[...] = orig_0
+            net.params[bbox_pred_key][1].data[...] = orig_1
         return filename
 
     def train_model(self, max_iters):

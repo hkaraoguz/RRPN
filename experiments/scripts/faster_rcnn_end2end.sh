@@ -46,7 +46,7 @@ case $DATASET in
     TRAIN_IMDB="MSRA_TRAIN"
     TEST_IMDB="MSRA_TEST"
     PT_DIR="rrpn"
-    ITERS=490000
+    ITERS=90000
     ;;
 
   rrpn_vehicle)
@@ -56,7 +56,7 @@ case $DATASET in
     TRAIN_IMDB="MSRA_TRAIN"
     TEST_IMDB="MSRA_TEST"
     PT_DIR="rrpn_vehicle"
-    ITERS=490000
+    ITERS=90000
     ;;
 
   *)
@@ -64,11 +64,11 @@ case $DATASET in
     exit
     ;;
 esac
-
+ITERS=25000
 LOG="experiments/logs/faster_rcnn_end2end_${NET}_${EXTRA_ARGS_SLUG}.txt.`date +'%Y-%m-%d_%H-%M-%S'`"
 exec &> >(tee -a "$LOG")
 echo Logging output to "$LOG"
-
+PT_DIR="rrpn"
 time ./tools/train_net.py --gpu ${GPU_ID} \
   --solver models/${PT_DIR}/${NET}/faster_rcnn_end2end/solver.prototxt \
   --weights data/imagenet_models/${NET}.v2.caffemodel \

@@ -1,5 +1,5 @@
-import numpy as np 
-import os 
+import numpy as np
+import os
 import cv2
 from xml.dom.minidom import parse
 import xml.dom.minidom
@@ -7,7 +7,7 @@ import data_extractor
 
 trigger_int = 0
 
-def get_rroidb(mode):	
+def get_rroidb(mode):
 
 	L_DATASET = []
 
@@ -43,7 +43,7 @@ def test_rroidb(mode):
 
 
 def pick_training_set(dataset_name, roidb, rel_db):
-	
+
 	global trigger_int
 
 	pick_dir = "./line_pick/"
@@ -67,7 +67,7 @@ def pick_training_set(dataset_name, roidb, rel_db):
 		#print roidb[i]["image"]
 		#print trigger_int
 		#print "reldb: ", str(rel_db[i])
-		
+
 		if trigger_int == 1:
 			print "pick", rel_db[i]["image"]
 			PR_obj.write(str(rel_db[i]) + ",")
@@ -79,11 +79,11 @@ def pick_training_set(dataset_name, roidb, rel_db):
     	PR_obj.close()
 
 def show_result_ICDAR(image_path):
-	
+
 	result_dir = "/home/shiki-alice/workspace/Rotation-Faster-RCNN/py-faster-rcnn/result/1210/exp0/vgg16_faster_rcnn_iter_270000.caffemodel/test_origin/"
-	
+
 	str_l = image_path.split("/")
-	
+
 	image_name = str_l[len(str_l) - 1]
 
 	image_name_l = image_name.split(".")
@@ -91,14 +91,14 @@ def show_result_ICDAR(image_path):
 	image_name = image_name_l[0]
 
 	vis_image_ICDAR(image_path, read_box_ICDAR(result_dir + "res_" + image_name + ".txt"))
-	
+
 
 def show_result_ICDAR13(image_path):
-	
+
 	result_dir = "/home/shiki-alice/workspace/Rotation-Faster-RCNN/py-faster-rcnn/result/1210/exp0/vgg16_faster_rcnn_iter_270000.caffemodel_ICDAR2013/test_origin/"
-	
+
 	str_l = image_path.split("/")
-	
+
 	image_name = str_l[len(str_l) - 1]
 
 	image_name_l = image_name.split(".")
@@ -108,21 +108,21 @@ def show_result_ICDAR13(image_path):
 	vis_image_ICDAR13(image_path, read_box_ICDAR(result_dir + "res_" + image_name + ".txt"))
 
 def show_result(image_path):
-	
+
 	result_dir = "/home/shiki-alice/workspace/Rotation-Faster-RCNN/py-faster-rcnn/result/17-126/exp0/vgg16_faster_rcnn_iter_15000.caffemodel/test/"
-	
+
 	str_l = image_path.split("/")
-	
+
 	image_name = str_l[len(str_l) - 1]
 
 	vis_image(image_path, read_box(result_dir + image_name + ".result"))
 
 def show_result_ori(image_path):
-	
+
 	result_dir = "/home/shiki-alice/workspace/Rotation-Faster-RCNN/py-faster-rcnn/result/17-126/exp0/vgg16_faster_rcnn_iter_15000.caffemodel/test_origin/"
-	
+
 	str_l = image_path.split("/")
-	
+
 	image_name = str_l[len(str_l) - 1]
 
 	vis_image(image_path, read_box(result_dir + image_name + ".result"))
@@ -132,12 +132,12 @@ def read_box(result_file):
 	result_obj = open(result_file, "r")
 	result_str = result_obj.read()
 	results_lines = result_str.split("\n")
-	
+
 	#precision = 0
 	#recall = 0
 	result_boxes = []
 	for result_line in results_lines:
-		
+
 		results = result_line.split(' ')
 		result_len = len(results)
 		result_box = []
@@ -153,13 +153,13 @@ def read_box_ICDAR(result_file):
 	result_obj = open(result_file, "r")
 	result_str = result_obj.read()
 	results_lines = result_str.split("\n")
-	
+
 	#precision = 0
 	#recall = 0
 	result_boxes = []
 	print results_lines
 	for result_line in results_lines:
-		
+
 		results = result_line.split(',')
 		result_len = len(results)
 		result_box = []
@@ -170,10 +170,11 @@ def read_box_ICDAR(result_file):
 	return result_boxes
 
 
-def vis_image(image_path, boxes):
+def vis_image(image_path, boxes,max_idx):
 
 	img = cv2.imread(image_path)
-	cv2.namedWindow("image")	
+	cv2.namedWindow("image")
+	cv2.startWindowThread()
 	#cv2.setMouseCallback("image", trigger)
 	for idx in range(len(boxes)):
 		cx,cy,h,w,angle, _ = boxes[idx]
@@ -213,32 +214,37 @@ def vis_image(image_path, boxes):
 		#print im
 		#print im.shape
 #			im = im.transpose(2,0,1)
-
-		cv2.line(img, (int(rotated_pts[0,0]),int(rotated_pts[0,1])), (int(rotated_pts[1,0]),int(rotated_pts[1,1])), (0, 0, 255),3)
-		cv2.line(img, (int(rotated_pts[1,0]),int(rotated_pts[1,1])), (int(rotated_pts[2,0]),int(rotated_pts[2,1])), (0, 0, 255),3)
-		cv2.line(img, (int(rotated_pts[2,0]),int(rotated_pts[2,1])), (int(rotated_pts[3,0]),int(rotated_pts[3,1])), (0, 0, 255),3)
-		cv2.line(img, (int(rotated_pts[3,0]),int(rotated_pts[3,1])), (int(rotated_pts[0,0]),int(rotated_pts[0,1])), (0, 0, 255),3)
-
+		if idx != max_idx:
+			cv2.line(img, (int(rotated_pts[0,0]),int(rotated_pts[0,1])), (int(rotated_pts[1,0]),int(rotated_pts[1,1])), (0, 0, 255),3)
+			cv2.line(img, (int(rotated_pts[1,0]),int(rotated_pts[1,1])), (int(rotated_pts[2,0]),int(rotated_pts[2,1])), (0, 0, 255),3)
+			cv2.line(img, (int(rotated_pts[2,0]),int(rotated_pts[2,1])), (int(rotated_pts[3,0]),int(rotated_pts[3,1])), (0, 0, 255),3)
+			cv2.line(img, (int(rotated_pts[3,0]),int(rotated_pts[3,1])), (int(rotated_pts[0,0]),int(rotated_pts[0,1])), (0, 0, 255),3)
+		else:
+			cv2.line(img, (int(rotated_pts[0,0]),int(rotated_pts[0,1])), (int(rotated_pts[1,0]),int(rotated_pts[1,1])), (255, 0, 255),3)
+			cv2.line(img, (int(rotated_pts[1,0]),int(rotated_pts[1,1])), (int(rotated_pts[2,0]),int(rotated_pts[2,1])), (255, 0, 255),3)
+			cv2.line(img, (int(rotated_pts[2,0]),int(rotated_pts[2,1])), (int(rotated_pts[3,0]),int(rotated_pts[3,1])), (255, 0, 255),3)
+			cv2.line(img, (int(rotated_pts[3,0]),int(rotated_pts[3,1])), (int(rotated_pts[0,0]),int(rotated_pts[0,1])), (255, 0, 255),3)
 	img = cv2.resize(img, (1024, 768))
 	cv2.imshow("image", img)
 	cv2.waitKey(0)
+	cv2.destroyAllWindows()
 
 	# cv2.imwrite("a.jpg", img)
 
 def vis_image_ICDAR(image_path, boxes):
 
 	img = cv2.imread(image_path)
-	cv2.namedWindow("image")	
-	
+	cv2.namedWindow("image")
+
 	for idx in range(len(boxes)):
-		
+
 
 		cv2.line(img, (int(boxes[idx][0]),int(boxes[idx][1])), (int(boxes[idx][2]),int(boxes[idx][3])), (0, 255, 255),5)
 		cv2.line(img, (int(boxes[idx][2]),int(boxes[idx][3])), (int(boxes[idx][4]),int(boxes[idx][5])), (0, 255, 255),5)
 		cv2.line(img, (int(boxes[idx][4]),int(boxes[idx][5])), (int(boxes[idx][6]),int(boxes[idx][7])), (0, 255, 255),5)
 		cv2.line(img, (int(boxes[idx][6]),int(boxes[idx][7])), (int(boxes[idx][0]),int(boxes[idx][1])), (0, 255, 255),5)
 
-	print boxes
+	#print boxes
 
 	img = cv2.resize(img, (1024, 768))
 	cv2.imshow("image", img)
@@ -247,10 +253,10 @@ def vis_image_ICDAR(image_path, boxes):
 def vis_image_ICDAR13(image_path, boxes):
 
 	img = cv2.imread(image_path)
-	cv2.namedWindow("image")	
+	cv2.namedWindow("image")
 	#cv2.setMouseCallback("image", trigger)
 	for idx in range(len(boxes)):
-		
+
 
 		cv2.line(img, (int(boxes[idx][0]),int(boxes[idx][1])), (int(boxes[idx][2]),int(boxes[idx][1])), (0, 255, 255),3)
 		cv2.line(img, (int(boxes[idx][2]),int(boxes[idx][1])), (int(boxes[idx][2]),int(boxes[idx][3])), (0, 255, 255),3)
@@ -265,7 +271,7 @@ def vis_image_ICDAR13(image_path, boxes):
 
 def trigger(event, x, y, flags, param):
 	global trigger_int
-	
+
 	if event == cv2.EVENT_LBUTTONDOWN:
 		trigger_int = 1
 	elif event == cv2.EVENT_RBUTTONDOWN:
@@ -273,10 +279,10 @@ def trigger(event, x, y, flags, param):
 
 def get_KAIST(mode):
 	DATASET_DIR = "/var/www/html/data/KAIST/English/"
-	
+
 	im_infos = []
 
-	
+
 
 	for f_eng in os.listdir(DATASET_DIR):
 		if os.path.isdir(DATASET_DIR + f_eng):
@@ -287,18 +293,18 @@ def get_KAIST(mode):
 						if gt_split[len(gt_split) - 1] == "xml":
 							gt_tree = xml.dom.minidom.parse(DATASET_DIR + f_eng + "/" + fsituation + "/" + gt_file)
 							gt_collection = gt_tree.documentElement
-							
+
 							image_file = gt_split[0] + ".JPG"
 							gt_image = gt_collection.getElementsByTagName("image")[0]
 							print DATASET_DIR + f_eng + "/" + fsituation + "/" + image_file
-							
+
 							resolution = gt_image.getElementsByTagName("resolution")[0]
-		
+
 							img_width = int(resolution.getAttribute("x"))
 							img_height = int(resolution.getAttribute("y"))
 							#print img_width, img_height
 							box_nodes = gt_image.getElementsByTagName("words")[0].getElementsByTagName("word")
-							
+
 							boxes = []
 
 							for box_node in box_nodes:
@@ -307,20 +313,20 @@ def get_KAIST(mode):
 								x_ctr = int(box_node.getAttribute("x")) + width / 2
 								y_ctr = int(box_node.getAttribute("y")) + height / 2
 								angle = 0 # no angle
-								
+
 								boxes.append([x_ctr, y_ctr, height, width, angle])
 							#print boxes
 
 							len_of_bboxes = len(boxes)
-							gt_boxes = np.zeros((len_of_bboxes, 5), dtype=np.int16)	
+							gt_boxes = np.zeros((len_of_bboxes, 5), dtype=np.int16)
 							gt_classes = np.zeros((len_of_bboxes), dtype=np.int32)
 							overlaps = np.zeros((len_of_bboxes, 2), dtype=np.float32) #text or non-text
 							seg_areas = np.zeros((len_of_bboxes), dtype=np.float32)
-		
+
 							############################################
 							"""
 							img = cv2.imread(DATASET_DIR + f_eng + "/" + fsituation + "/" + image_file)
-	
+
 							for idx in range(len(boxes)):
 								cx,cy,h,w,angle = boxes[idx]
 								lt = [cx - w/2, cy - h/2,1]
@@ -418,16 +424,16 @@ def get_ICDAR2003(mode):
 	#print len(gt_images)
 
 	for gt_image in gt_images:
-		image_file = gt_image.getElementsByTagName("imageName")[0].childNodes[0].data		
-		
+		image_file = gt_image.getElementsByTagName("imageName")[0].childNodes[0].data
+
 		resolution = gt_image.getElementsByTagName("resolution")[0]
-		
+
 		img_width = int(resolution.getAttribute("x"))
 		img_height = int(resolution.getAttribute("y"))
 
 		box_nodes = gt_image.getElementsByTagName("taggedRectangles")[0].getElementsByTagName("taggedRectangle")
 
-		boxes = []		
+		boxes = []
 
 		for box_node in box_nodes:
 			width = int(float(box_node.getAttribute("width")))
@@ -436,17 +442,17 @@ def get_ICDAR2003(mode):
 			y_ctr = int(float(box_node.getAttribute("y")) + height / 2)
 			angle = float(box_node.getAttribute("rotation")) # rectangle
 			boxes.append([x_ctr, y_ctr, height, width, angle])
-		
+
 		len_of_bboxes = len(boxes)
-		gt_boxes = np.zeros((len_of_bboxes, 5), dtype=np.int16)	
+		gt_boxes = np.zeros((len_of_bboxes, 5), dtype=np.int16)
 		gt_classes = np.zeros((len_of_bboxes), dtype=np.int32)
 		overlaps = np.zeros((len_of_bboxes, 2), dtype=np.float32) #text or non-text
 		seg_areas = np.zeros((len_of_bboxes), dtype=np.float32)
-		
+
 		############################################
 		"""
 		img = cv2.imread(DATASET_DIR + image_file)
-		
+
 		for idx in range(len(boxes)):
 			cx,cy,h,w,angle = boxes[idx]
 			lt = [cx - w/2, cy - h/2,1]
@@ -473,7 +479,7 @@ def get_ICDAR2003(mode):
 			#else :
 			#	cos_cita = 1
 			#	sin_cita = 0
-	
+
 			M0 = np.array([[1,0,0],[0,1,0],[-cx,-cy,1]])
 			M1 = np.array([[cos_cita, sin_cita,0], [-sin_cita, cos_cita,0],[0,0,1]])
 			M2 = np.array([[1,0,0],[0,1,0],[cx,cy,1]])
@@ -485,7 +491,7 @@ def get_ICDAR2003(mode):
 			#print im
 			#print im.shape
 #			im = im.transpose(2,0,1)
-	
+
 			cv2.line(img, (int(rotated_pts[0,0]),int(rotated_pts[0,1])), (int(rotated_pts[1,0]),int(rotated_pts[1,1])), (0, 0, 255),3)
 			cv2.line(img, (int(rotated_pts[1,0]),int(rotated_pts[1,1])), (int(rotated_pts[2,0]),int(rotated_pts[2,1])), (0, 0, 255),3)
 			cv2.line(img, (int(rotated_pts[2,0]),int(rotated_pts[2,1])), (int(rotated_pts[3,0]),int(rotated_pts[3,1])), (0, 0, 255),3)
@@ -541,30 +547,30 @@ def get_ICDAR2003(mode):
 
 def get_NEOCR(mode): # discard
 	DATASET_DIR = "/var/www/html/data/NEOCR_SCENE_TEXT/neocr_dataset/"
-		       
+
 	gt_dir = "Annotations/users/pixtract/dataset/"
-	          
+
 	img_dir = "Images/users/pixtract/dataset/"
-	
-	
+
+
 	gt_file_list = []
-	
-	
+
+
 	for gt_file in os.listdir(DATASET_DIR + gt_dir):
-		
+
 		gt_tree = xml.dom.minidom.parse(DATASET_DIR + gt_dir + gt_file)
-		
+
 		annotation = gt_tree.documentElement
 		im_infos = []
-		
-		image_file = annotation.getElementsByTagName("filename")[0].childNodes[0].data	
+
+		image_file = annotation.getElementsByTagName("filename")[0].childNodes[0].data
 
 		image_properties = annotation.getElementsByTagName("properties")[0]
 
 		img_height = int(image_properties.getElementsByTagName("height")[0].childNodes[0].data)
 		img_width = int(image_properties.getElementsByTagName("width")[0].childNodes[0].data)
 
-		
+
 
 		object_list = annotation.getElementsByTagName("object")
 
@@ -582,19 +588,19 @@ def get_NEOCR(mode): # discard
 			h = rects[7] - rects[1]
 			w = rects[2] - rects[0]
 			angle = 0
-			
+
 			boxes.append([cx, cy, h, w, angle])
-		
+
 		len_of_bboxes = len(boxes)
-		gt_boxes = np.zeros((len_of_bboxes, 5), dtype=np.int16)	
+		gt_boxes = np.zeros((len_of_bboxes, 5), dtype=np.int16)
 		gt_classes = np.zeros((len_of_bboxes), dtype=np.int32)
 		overlaps = np.zeros((len_of_bboxes, 2), dtype=np.float32) #text or non-text
 		seg_areas = np.zeros((len_of_bboxes), dtype=np.float32)
-		
+
 		############################################
-		
+
 		img = cv2.imread(DATASET_DIR + img_dir + image_file)
-		
+
 		for idx in range(len(boxes)):
 			cx,cy,h,w,angle = boxes[idx]
 			lt = [cx - w/2, cy - h/2,1]
@@ -621,7 +627,7 @@ def get_NEOCR(mode): # discard
 			#else :
 			#	cos_cita = 1
 			#	sin_cita = 0
-	
+
 			M0 = np.array([[1,0,0],[0,1,0],[-cx,-cy,1]])
 			M1 = np.array([[cos_cita, sin_cita,0], [-sin_cita, cos_cita,0],[0,0,1]])
 			M2 = np.array([[1,0,0],[0,1,0],[cx,cy,1]])
@@ -633,7 +639,7 @@ def get_NEOCR(mode): # discard
 			#print im
 			#print im.shape
 #			im = im.transpose(2,0,1)
-	
+
 			cv2.line(img, (int(rotated_pts[0,0]),int(rotated_pts[0,1])), (int(rotated_pts[1,0]),int(rotated_pts[1,1])), (0, 0, 255),3)
 			cv2.line(img, (int(rotated_pts[1,0]),int(rotated_pts[1,1])), (int(rotated_pts[2,0]),int(rotated_pts[2,1])), (0, 0, 255),3)
 			cv2.line(img, (int(rotated_pts[2,0]),int(rotated_pts[2,1])), (int(rotated_pts[3,0]),int(rotated_pts[3,1])), (0, 0, 255),3)
@@ -643,10 +649,10 @@ def get_NEOCR(mode): # discard
 
 		cv2.imshow("win", img)
 		cv2.waitKey(0)
-		
+
 		###############################################
 
-		
+
 
 def get_SVT(mode):
 	DATASET_DIR = "/var/www/html/data/SVT_SCENE_TEXT/svt/svt1/"
@@ -662,17 +668,17 @@ def get_SVT(mode):
 	gt_images = gt_collection.getElementsByTagName("image")
 
 	for gt_image in gt_images:
-		
-		image_file = gt_image.getElementsByTagName("imageName")[0].childNodes[0].data		
-		
+
+		image_file = gt_image.getElementsByTagName("imageName")[0].childNodes[0].data
+
 		resolution = gt_image.getElementsByTagName("Resolution")[0]
-		
+
 		img_width = int(resolution.getAttribute("x"))
 		img_height = int(resolution.getAttribute("y"))
 
 		box_nodes = gt_image.getElementsByTagName("taggedRectangles")[0].getElementsByTagName("taggedRectangle")
 
-		boxes = []		
+		boxes = []
 
 		for box_node in box_nodes:
 			width = int(box_node.getAttribute("width"))
@@ -683,15 +689,15 @@ def get_SVT(mode):
 			boxes.append([x_ctr, y_ctr, height, width, angle])
 
 		len_of_bboxes = len(boxes)
-		gt_boxes = np.zeros((len_of_bboxes, 5), dtype=np.int16)	
+		gt_boxes = np.zeros((len_of_bboxes, 5), dtype=np.int16)
 		gt_classes = np.zeros((len_of_bboxes), dtype=np.int32)
 		overlaps = np.zeros((len_of_bboxes, 2), dtype=np.float32) #text or non-text
 		seg_areas = np.zeros((len_of_bboxes), dtype=np.float32)
-		
+
 		############################################
 		'''
 		img = cv2.imread(DATASET_DIR + image_file)
-		
+
 		for idx in range(len(boxes)):
 			cx,cy,h,w,angle = boxes[idx]
 			lt = [cx - w/2, cy - h/2,1]
@@ -718,7 +724,7 @@ def get_SVT(mode):
 			#else :
 			#	cos_cita = 1
 			#	sin_cita = 0
-	
+
 			M0 = np.array([[1,0,0],[0,1,0],[-cx,-cy,1]])
 			M1 = np.array([[cos_cita, sin_cita,0], [-sin_cita, cos_cita,0],[0,0,1]])
 			M2 = np.array([[1,0,0],[0,1,0],[cx,cy,1]])
@@ -730,7 +736,7 @@ def get_SVT(mode):
 			#print im
 			#print im.shape
 #			im = im.transpose(2,0,1)
-	
+
 			cv2.line(img, (int(rotated_pts[0,0]),int(rotated_pts[0,1])), (int(rotated_pts[1,0]),int(rotated_pts[1,1])), (0, 0, 255),3)
 			cv2.line(img, (int(rotated_pts[1,0]),int(rotated_pts[1,1])), (int(rotated_pts[2,0]),int(rotated_pts[2,1])), (0, 0, 255),3)
 			cv2.line(img, (int(rotated_pts[2,0]),int(rotated_pts[2,1])), (int(rotated_pts[3,0]),int(rotated_pts[3,1])), (0, 0, 255),3)
@@ -752,7 +758,7 @@ def get_SVT(mode):
 		max_overlaps = overlaps.max(axis=1)
 		# gt class that had the max overlap
 		max_classes = overlaps.argmax(axis=1)
-		
+
 		im_info = {
 			'gt_classes': gt_classes,
 			'max_classes': max_classes,
@@ -783,7 +789,7 @@ def get_SVT(mode):
 			}
 		relative_infos.append(relative_info)
 
-		
+
 	return im_infos, relative_infos
 
 def get_ICDAR2013(mode):
@@ -802,13 +808,13 @@ def get_ICDAR2013(mode):
 	relative_infos = []
 
 	gt_file_list = os.listdir(DATASET_DIR + gt_dir)
-	
-	
+
+
 	for gt_file in gt_file_list:
 		gt_fobj = open(DATASET_DIR + gt_dir + gt_file)
 		gt_lines =  gt_fobj.read().split("\n")
-	
-		img_idx = (gt_file.split(".")[0]).split("_")[1]	
+
+		img_idx = (gt_file.split(".")[0]).split("_")[1]
 		img = cv2.imread(DATASET_DIR + img_dir + img_idx + ".jpg")
 
 		boxes = []
@@ -818,24 +824,24 @@ def get_ICDAR2013(mode):
 			if len(gt_idx) > 1:
 				width = int(gt_idx[2]) - int(gt_idx[0])
 				height = int(gt_idx[3]) - int(gt_idx[1])
-				x_ctr = int(gt_idx[0]) + width / 2 
-				y_ctr = int(gt_idx[1]) + height / 2 
+				x_ctr = int(gt_idx[0]) + width / 2
+				y_ctr = int(gt_idx[1]) + height / 2
 				angle = 0 # no orientation
-				
+
 				boxes.append([x_ctr, y_ctr, height, width, angle])
 
 		len_of_bboxes = len(boxes)
-		gt_boxes = np.zeros((len_of_bboxes, 5), dtype=np.int16)	
+		gt_boxes = np.zeros((len_of_bboxes, 5), dtype=np.int16)
 		gt_classes = np.zeros((len_of_bboxes), dtype=np.int32)
 		overlaps = np.zeros((len_of_bboxes, 2), dtype=np.float32) #text or non-text
 		seg_areas = np.zeros((len_of_bboxes), dtype=np.float32)
 
 		#if len_of_bboxes == 0:
  			#print gt_file
-		
+
 		############################################
 		'''
-		
+
 		for idx in range(len(boxes)):
 			cx,cy,h,w,angle = boxes[idx]
 			lt = [cx - w/2, cy - h/2,1]
@@ -862,7 +868,7 @@ def get_ICDAR2013(mode):
 			#else :
 			#	cos_cita = 1
 			#	sin_cita = 0
-	
+
 			M0 = np.array([[1,0,0],[0,1,0],[-cx,-cy,1]])
 			M1 = np.array([[cos_cita, sin_cita,0], [-sin_cita, cos_cita,0],[0,0,1]])
 			M2 = np.array([[1,0,0],[0,1,0],[cx,cy,1]])
@@ -874,7 +880,7 @@ def get_ICDAR2013(mode):
 			#print im
 			#print im.shape
 #			im = im.transpose(2,0,1)
-	
+
 			cv2.line(img, (int(rotated_pts[0,0]),int(rotated_pts[0,1])), (int(rotated_pts[1,0]),int(rotated_pts[1,1])), (0, 0, 255),3)
 			cv2.line(img, (int(rotated_pts[1,0]),int(rotated_pts[1,1])), (int(rotated_pts[2,0]),int(rotated_pts[2,1])), (0, 0, 255),3)
 			cv2.line(img, (int(rotated_pts[2,0]),int(rotated_pts[2,1])), (int(rotated_pts[3,0]),int(rotated_pts[3,1])), (0, 0, 255),3)
@@ -949,8 +955,8 @@ def get_HUST(mode):
 		gt_file = open(os.path.join(DATASET_DIR, gt_list[i]))
 		gt_content = gt_file.read()
 		gt_li =  gt_content.split('\n')
-		
-		img = cv2.imread(os.path.join(DATASET_DIR, img_list[i]))	
+
+		img = cv2.imread(os.path.join(DATASET_DIR, img_list[i]))
 
 		boxes = []
 
@@ -968,7 +974,7 @@ def get_HUST(mode):
 		 		#print angle
 
 		len_of_bboxes = len(boxes)
-		gt_boxes = np.zeros((len_of_bboxes, 5), dtype=np.int16)	
+		gt_boxes = np.zeros((len_of_bboxes, 5), dtype=np.int16)
 		gt_classes = np.zeros((len_of_bboxes), dtype=np.int32)
 		overlaps = np.zeros((len_of_bboxes, 2), dtype=np.float32) #text or non-text
 		seg_areas = np.zeros((len_of_bboxes), dtype=np.float32)
@@ -978,7 +984,7 @@ def get_HUST(mode):
 
 		############################################
 		'''
-		
+
 		for idx in range(len(boxes)):
 			cx,cy,h,w,angle = boxes[idx]
 			lt = [cx - w/2, cy - h/2,1]
@@ -1005,7 +1011,7 @@ def get_HUST(mode):
 			#else :
 			#	cos_cita = 1
 			#	sin_cita = 0
-	
+
 			M0 = np.array([[1,0,0],[0,1,0],[-cx,-cy,1]])
 			M1 = np.array([[cos_cita, sin_cita,0], [-sin_cita, cos_cita,0],[0,0,1]])
 			M2 = np.array([[1,0,0],[0,1,0],[cx,cy,1]])
@@ -1017,7 +1023,7 @@ def get_HUST(mode):
 			#print im
 			#print im.shape
 #			im = im.transpose(2,0,1)
-	
+
 			cv2.line(img, (int(rotated_pts[0,0]),int(rotated_pts[0,1])), (int(rotated_pts[1,0]),int(rotated_pts[1,1])), (0, 0, 255),3)
 			cv2.line(img, (int(rotated_pts[1,0]),int(rotated_pts[1,1])), (int(rotated_pts[2,0]),int(rotated_pts[2,1])), (0, 0, 255),3)
 			cv2.line(img, (int(rotated_pts[2,0]),int(rotated_pts[2,1])), (int(rotated_pts[3,0]),int(rotated_pts[3,1])), (0, 0, 255),3)
@@ -1071,7 +1077,7 @@ def get_MSRA(mode):
 				gt_list.append(file_spl[0] + ".gt")
 
 	im_infos = []
-	
+
 	#print gt_list
 	for i in range(len(img_list)):
 		#print os.path.join(DATASET_DIR, gt_list[i])
@@ -1080,9 +1086,9 @@ def get_MSRA(mode):
 		gt_li =  gt_content.split('\n')
 		hard_boxes = []
 		easy_boxes = []
-	
+
 		img = cv2.imread(os.path.join(DATASET_DIR, img_list[i]))
-	
+
 		for gt_line in gt_li:
 
 			gts = gt_line.split(' ')
@@ -1094,8 +1100,8 @@ def get_MSRA(mode):
 					y_ctr = int(gts[3]) + height / 2
 					angle = -float(gts[6]) * 180.0 / np.pi # anti clock-wise angle
 					hard_boxes.append([x_ctr, y_ctr, height, width, angle])
-				
-				elif int(gts[1]) == 0: 
+
+				elif int(gts[1]) == 0:
 					width = int(gts[4])
 					height = int(gts[5])
 					x_ctr = int(gts[2]) + width / 2
@@ -1103,11 +1109,11 @@ def get_MSRA(mode):
 					angle = -float(gts[6]) * 180.0 / np.pi # anti clock-wise angle
 					easy_boxes.append([x_ctr, y_ctr, height, width, angle])
 
-	
+
 
 		len_of_bboxes = len(hard_boxes) + len(easy_boxes)
 
-		boxes = np.zeros((len_of_bboxes, 5), dtype=np.int16)	
+		boxes = np.zeros((len_of_bboxes, 5), dtype=np.int16)
 		gt_classes = np.zeros((len_of_bboxes), dtype=np.int32)
 		overlaps = np.zeros((len_of_bboxes, 2), dtype=np.float32) #text or non-text
 		seg_areas = np.zeros((len_of_bboxes), dtype=np.float32)
@@ -1117,16 +1123,16 @@ def get_MSRA(mode):
 			gt_classes[idx] = 1 # cls_text
 			overlaps[idx, 1] = 1.0 # cls_text
 			seg_areas[idx] = (hard_boxes[idx][2]) * (hard_boxes[idx][3])
-		for idx in range(len(easy_boxes)):	
+		for idx in range(len(easy_boxes)):
 			boxes[idx + len(hard_boxes), :] = [easy_boxes[idx][0], easy_boxes[idx][1], easy_boxes[idx][2], easy_boxes[idx][3], easy_boxes[idx][4]]
 			gt_classes[idx + len(hard_boxes)] = 1 # cls_text
 			overlaps[idx + len(hard_boxes), 1] = 1.0 # cls_text
 			seg_areas[idx + len(hard_boxes)] = (easy_boxes[idx][2]) * (easy_boxes[idx][3])
-		
+
 		max_overlaps = overlaps.max(axis=1)
 		# gt class that had the max overlap
 		max_classes = overlaps.argmax(axis=1)
-	
+
 		im_info = {
 			'gt_classes': gt_classes,
 			'max_classes': max_classes,
@@ -1141,7 +1147,7 @@ def get_MSRA(mode):
 			'rotated': True
 			}
 
-	
+
 		im_infos.append(im_info)
 
 	return im_infos
@@ -1158,19 +1164,19 @@ def get_ICDAR2015_new(mode):
 	file_list = os.listdir(dir_path)
 
 	gt_list = []
-	img_list = []		
+	img_list = []
 
-	
+
 
 	for file_name in file_list:
 		split = file_name.split(".")
 		if split[len(split) - 1] == img_file_type:
 			img_list.append(file_name)
 
-	
+
 
 	for img_ind in range(len(img_list)):
-		split = img_list[img_ind].split(".")	
+		split = img_list[img_ind].split(".")
 		gt_list.append(split[0] + "." + split[1] + "." + cls)
 
 	im_infos = []
@@ -1192,7 +1198,7 @@ def get_ICDAR2015_new(mode):
 
 		img = cv2.imread(img_name)
 
-	
+
 
 		for gt_line in gt_split:
 			gt_ind = gt_line.split('\t')
@@ -1202,14 +1208,14 @@ def get_ICDAR2015_new(mode):
 				pt2 = (float(condinate_list[2]), float(condinate_list[3]))
 				pt3 = (float(condinate_list[4]), float(condinate_list[5]))
 				pt4 = (float(condinate_list[6]), float(condinate_list[7]))
-			
+
 				edge1 = np.sqrt((pt1[0] - pt2[0]) * (pt1[0] - pt2[0]) + (pt1[1] - pt2[1]) * (pt1[1] - pt2[1]))
 				edge2 = np.sqrt((pt2[0] - pt3[0]) * (pt2[0] - pt3[0]) + (pt2[1] - pt3[1]) * (pt2[1] - pt3[1]))
 
 				angle = 0
-			
+
 				if edge1 > edge2:
-				
+
 					width = edge1
 					height = edge2
 					if pt1[0] - pt2[0] != 0:
@@ -1231,13 +1237,13 @@ def get_ICDAR2015_new(mode):
 				y_ctr = float(pt1[1] + pt3[1]) / 2#pt1[1] + np.abs(float(pt1[1] - pt3[1])) / 2
 
 				boxes.append([x_ctr, y_ctr, height, width, angle])
-			
+
 		len_of_bboxes = len(boxes)
-		gt_boxes = np.zeros((len_of_bboxes, 5), dtype=np.int16)	
+		gt_boxes = np.zeros((len_of_bboxes, 5), dtype=np.int16)
 		gt_classes = np.zeros((len_of_bboxes), dtype=np.int32)
 		overlaps = np.zeros((len_of_bboxes, 2), dtype=np.float32) #text or non-text
 		seg_areas = np.zeros((len_of_bboxes), dtype=np.float32)
-		
+
 		for idx in range(len(boxes)):
 			gt_boxes[idx, :] = [boxes[idx][0], boxes[idx][1], boxes[idx][2], boxes[idx][3], boxes[idx][4]]
 			gt_classes[idx] = 1 # cls_text
@@ -1291,19 +1297,19 @@ def get_ICDAR2015(mode):
 	file_list = os.listdir(dir_path)
 
 	gt_list = []
-	img_list = []		
+	img_list = []
 
-	
+
 
 	for file_name in file_list:
 		split = file_name.split(".")
 		if split[len(split) - 1] == img_file_type:
 			img_list.append(file_name)
 
-	
+
 
 	for img_ind in range(len(img_list)):
-		split = img_list[img_ind].split(".")	
+		split = img_list[img_ind].split(".")
 		gt_list.append(split[0] + "." + split[1] + "." + cls)
 
 	im_infos = []
@@ -1325,7 +1331,7 @@ def get_ICDAR2015(mode):
 
 		img = cv2.imread(img_name)
 
-	
+
 
 		for gt_line in gt_split:
 			gt_ind = gt_line.split('\t')
@@ -1335,14 +1341,14 @@ def get_ICDAR2015(mode):
 				pt2 = (float(condinate_list[2]), float(condinate_list[3]))
 				pt3 = (float(condinate_list[4]), float(condinate_list[5]))
 				pt4 = (float(condinate_list[6]), float(condinate_list[7]))
-			
+
 				edge1 = np.sqrt((pt1[0] - pt2[0]) * (pt1[0] - pt2[0]) + (pt1[1] - pt2[1]) * (pt1[1] - pt2[1]))
 				edge2 = np.sqrt((pt2[0] - pt3[0]) * (pt2[0] - pt3[0]) + (pt2[1] - pt3[1]) * (pt2[1] - pt3[1]))
 
 				angle = 0
-			
+
 				if edge1 > edge2:
-				
+
 					width = edge1
 					height = edge2
 					if pt1[0] - pt2[0] != 0:
@@ -1364,13 +1370,13 @@ def get_ICDAR2015(mode):
 				y_ctr = float(pt1[1] + pt3[1]) / 2#pt1[1] + np.abs(float(pt1[1] - pt3[1])) / 2
 
 				boxes.append([x_ctr, y_ctr, height, width, angle])
-			
+
 		len_of_bboxes = len(boxes)
-		gt_boxes = np.zeros((len_of_bboxes, 5), dtype=np.int16)	
+		gt_boxes = np.zeros((len_of_bboxes, 5), dtype=np.int16)
 		gt_classes = np.zeros((len_of_bboxes), dtype=np.int32)
 		overlaps = np.zeros((len_of_bboxes, 2), dtype=np.float32) #text or non-text
 		seg_areas = np.zeros((len_of_bboxes), dtype=np.float32)
-		
+
 		for idx in range(len(boxes)):
 			gt_boxes[idx, :] = [boxes[idx][0], boxes[idx][1], boxes[idx][2], boxes[idx][3], boxes[idx][4]]
 			gt_classes[idx] = 1 # cls_text
@@ -1424,19 +1430,19 @@ def get_ICDAR2015_test(mode):
 	file_list = os.listdir(dir_path)
 
 	gt_list = []
-	img_list = []		
+	img_list = []
 
-	
+
 
 	for file_name in file_list:
 		split = file_name.split(".")
 		if split[len(split) - 1] == img_file_type:
 			img_list.append(file_name)
 
-	
+
 
 	for img_ind in range(len(img_list)):
-		split = img_list[img_ind].split(".")	
+		split = img_list[img_ind].split(".")
 		gt_list.append(split[0] + "." + split[1] + "." + cls)
 
 	im_infos = []
@@ -1458,7 +1464,7 @@ def get_ICDAR2015_test(mode):
 
 		img = cv2.imread(img_name)
 
-	
+
 
 		for gt_line in gt_split:
 			gt_ind = gt_line.split('\t')
@@ -1468,14 +1474,14 @@ def get_ICDAR2015_test(mode):
 				pt2 = (float(condinate_list[2]), float(condinate_list[3]))
 				pt3 = (float(condinate_list[4]), float(condinate_list[5]))
 				pt4 = (float(condinate_list[6]), float(condinate_list[7]))
-			
+
 				edge1 = np.sqrt((pt1[0] - pt2[0]) * (pt1[0] - pt2[0]) + (pt1[1] - pt2[1]) * (pt1[1] - pt2[1]))
 				edge2 = np.sqrt((pt2[0] - pt3[0]) * (pt2[0] - pt3[0]) + (pt2[1] - pt3[1]) * (pt2[1] - pt3[1]))
 
 				angle = 0
-			
+
 				if edge1 > edge2:
-				
+
 					width = edge1
 					height = edge2
 					if pt1[0] - pt2[0] != 0:
@@ -1497,13 +1503,13 @@ def get_ICDAR2015_test(mode):
 				y_ctr = float(pt1[1] + pt3[1]) / 2#pt1[1] + np.abs(float(pt1[1] - pt3[1])) / 2
 
 				boxes.append([x_ctr, y_ctr, height, width, angle])
-			
+
 		len_of_bboxes = len(boxes)
-		gt_boxes = np.zeros((len_of_bboxes, 5), dtype=np.int16)	
+		gt_boxes = np.zeros((len_of_bboxes, 5), dtype=np.int16)
 		gt_classes = np.zeros((len_of_bboxes), dtype=np.int32)
 		overlaps = np.zeros((len_of_bboxes, 2), dtype=np.float32) #text or non-text
 		seg_areas = np.zeros((len_of_bboxes), dtype=np.float32)
-		
+
 		for idx in range(len(boxes)):
 			gt_boxes[idx, :] = [boxes[idx][0], boxes[idx][1], boxes[idx][2], boxes[idx][3], boxes[idx][4]]
 			gt_classes[idx] = 1 # cls_text
@@ -1553,7 +1559,7 @@ def test_ICDAR2015(mode):
 	img_file_type = "jpg"
 	im_infos = []
 
-	img_list = []		
+	img_list = []
 	for file_name in file_list:
 		split = file_name.split(".")
 		if split[len(split) - 1] == img_file_type:
@@ -1567,7 +1573,7 @@ def test_ICDAR2015(mode):
 	return im_infos
 
 def get_bot_img(mode):
-	
+
 	bot_img_dir = {
 			'noodle': '/var/www/html/data/BOT2/bot_train1/Train/Instant Noodle/',
 			'shampoo': '/var/www/html/data/BOT2/bot_train1/Train/Shampoo',
@@ -1579,8 +1585,8 @@ def get_bot_img(mode):
 
 	for file_name in file_list:
 		split = file_name.split(".")
-		
-		
+
+
 		im_info = {
 		'set': mode,
 		'image': bot_img_dir[mode] + file_name
@@ -1591,18 +1597,18 @@ def get_bot_img(mode):
 def get_test_coco_img(mode):
 	coco_train_dir = '/var/www/html/data/MSCOCO/train2014/'
 	coco_val_dir = '/var/www/html/data/MSCOCO/val2014/'
-	
+
 	train_list = os.listdir(coco_train_dir)
 	val_list = os.listdir(coco_val_dir)
 
 	img_file_type = "jpg"
 	im_infos = []
 
-	if mode == 'train':	
+	if mode == 'train':
 		for file_name in train_list:
 			split = file_name.split(".")
 			if split[len(split) - 1] == img_file_type:
-			
+
 
 				im_info = {
 				'set': 'train',
@@ -1613,7 +1619,7 @@ def get_test_coco_img(mode):
 		for file_name in val_list:
 			split = file_name.split(".")
 			if split[len(split) - 1] == img_file_type:
-			
+
 				im_info = {
 				'set': 'val',
 				'image': coco_val_dir + file_name
