@@ -54,8 +54,8 @@ def r_get_rotate_minibatch(roidb, num_classes):
 
 	if roidb[0]['rotated']: # D
 	    gt_boxes[:, 0:bbox_para_num] = rotate_gt_bbox(roidb[0], angles[0], gt_inds) # D
-	    
-        
+
+
         gt_boxes[:, 0:bbox_para_num-1] = gt_boxes[:, 0:bbox_para_num-1] * im_scales[0] # D
         gt_boxes[:, bbox_para_num] = roidb[0]['gt_classes'][gt_inds] # D
         blobs['gt_boxes'] = gt_boxes
@@ -70,7 +70,7 @@ def r_get_rotate_minibatch(roidb, num_classes):
 def rotate_gt_bbox(origin_gt_roidb, angle, gt_inds):
 
     rotated_gt_boxes = np.empty((len(gt_inds), 5), dtype=np.float32)
-    
+
     im_height = origin_gt_roidb["height"]
     im_width = origin_gt_roidb["width"]
 
@@ -93,13 +93,13 @@ def rotate_gt_bbox(origin_gt_roidb, angle, gt_inds):
 
     pts_ctr = pts_ctr + np.tile((im_width / 2, im_height / 2), (len(gt_inds), 1))
 
-    origin_gt_boxes[:, 0:2] = pts_ctr 
+    origin_gt_boxes[:, 0:2] = pts_ctr
     #print origin_gt_boxes[:, 0:2]
 
     len_of_gt = len(origin_gt_boxes)
 
     # rectificate the angle in the range of [-45, 45]
-    
+
     for idx in range(len_of_gt):
         ori_angle = origin_gt_boxes[idx, 4]
 	height = origin_gt_boxes[idx, 2]
@@ -122,7 +122,7 @@ def rotate_gt_bbox(origin_gt_roidb, angle, gt_inds):
 	rotated_gt_boxes[idx,2] = height * cfg.TRAIN.GT_MARGIN
 	rotated_gt_boxes[idx,3] = width * cfg.TRAIN.GT_MARGIN
 	rotated_gt_boxes[idx,4] = rotated_angle
-    
+
     return rotated_gt_boxes
 
 '''
@@ -138,11 +138,11 @@ def rotate_gt_bbox(origin_gt_roidb, angle, gt_inds):
 		origin_gt_boxes[idx, 4] = ori_angle + angle + 90
 		origin_gt_boxes[idx, 2] = width
 		origin_gt_boxes[idx, 3] = height
-	
+
 	elif ori_angle + angle <= 45 and ori_angle + angle >= -45:
 		origin_gt_boxes[idx, 4] = ori_angle + angle
-    
-    
+
+
 
     #origin_gt_boxes[:, 4] = origin_gt_boxes[:, 4] + angle
 
@@ -160,18 +160,18 @@ def _get_rprocessed_image_blob(roidb, scale_inds, angles):
         im = cv2.imread(roidb[i]['image'])
         if roidb[i]['flipped']:
             im = im[:, ::-1, :]
-	
+
 	if roidb[i]['rotated']:
 	    # get the size of image
-	    (h, w) = im.shape[:2] 
+	    (h, w) = im.shape[:2]
 	    # set the rotation center
-	    center = (w / 2, h / 2) 
+	    center = (w / 2, h / 2)
 	    # get the rotation matrix no scale changes
 	    scale = 1.0
 	    # anti-clockwise angle in the function
 	    M = cv2.getRotationMatrix2D(center, angles[i], scale)
-	    im = cv2.warpAffine(im,M,(w,h)) 
- 
+	    im = cv2.warpAffine(im,M,(w,h))
+
         target_size = cfg.TRAIN.SCALES[scale_inds[i]]
         im, im_scale = prep_im_for_blob(im, cfg.PIXEL_MEANS, target_size,
                                         cfg.TRAIN.MAX_SIZE)
@@ -205,13 +205,15 @@ def r_get_minibatch(roidb, num_classes):
     # Get the input image blob, formatted for caffe
     im_blob, im_scales = _get_image_blob(roidb, random_scale_inds)
 
+    #print len(im_scales)
+
     blobs = {'data': im_blob}
 
     # bbox: [ctr_x, ctr_y, height, width, angle]
 
     if cfg.TRAIN.HAS_RPN:
-        assert len(im_scales) == 1, "Single batch only"
-        assert len(roidb) == 1, "Single batch only"
+        #assert len(im_scales) == 1, "Single batch only"
+        #assert len(roidb) == 1, "Single batch only"
 
         # gt boxes: (ctr_x, ctr_y, height, width, angle, cls)
 
@@ -337,7 +339,7 @@ def _get_image_blob(roidb, scale_inds):
     return blob, im_scales
 
 def im_rotate(im):
-    
+
     return im
 
 
@@ -349,7 +351,7 @@ def _project_im_rois(im_rois, im_scale_factor):
 def _get_bbox_regression_labels(bbox_target_data, num_classes):
 
     bbox_para_num = 5
-	
+
     """Bounding-box regression targets are stored in a compact form in the
     roidb.
 
@@ -399,14 +401,14 @@ if __name__ == "__main__":
 
     roidb = [get_rroidb("test")[0]]
     blobs = r_get_rotate_minibatch(roidb, 2)
-    
+
     im = blobs['data'].transpose(0, 2, 3, 1)[0]
 
-    #print blobs   
+    #print blobs
 
     gt_boxes = blobs['gt_boxes']
     info = blobs['im_info']
-    
+
     s = 1.0 / info[0,2]
     im = cv2.resize(im, None, None, fx=s, fy=s,interpolation=cv2.INTER_LINEAR)
     im += cfg.PIXEL_MEANS
@@ -429,7 +431,7 @@ if __name__ == "__main__":
 	pts.append(rt)
 	pts.append(rb)
 	pts.append(lb)
-	
+
         print angle
 
 	if angle != 0:
@@ -439,7 +441,7 @@ if __name__ == "__main__":
 	else :
 		cos_cita = 1
 		sin_cita = 0
-	
+
 	M0 = np.array([[1,0,0],[0,1,0],[-cx,-cy,1]])
 	M1 = np.array([[cos_cita, sin_cita,0], [-sin_cita, cos_cita,0],[0,0,1]])
 	M2 = np.array([[1,0,0],[0,1,0],[cx,cy,1]])

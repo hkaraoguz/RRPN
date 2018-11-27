@@ -26,17 +26,23 @@ import caffe, os, sys, cv2
 import argparse
 import math
 from rotation.data_extractor import get_rroidb, test_rroidb, get_MSRA
-reload(cv2)
+#reload(cv2)
 # from eval.MSRA_eval import eval as MSRA_eval
 from rotation.rt_test import r_im_detect
 from rotation.merge_box import merge
 import rotation.rt_test_crop as rt_crop
 from rotation.data_pick import vis_image
 
-CLASSES = ('__background__',
-           'text')
+import shutil
 
-def demo(net, image_name, gt_boxes, result_dir, conf = 0.75):
+
+#CLASSES = ('__background__','negative'
+#           'positive')
+
+CLASSES = ('__background__',
+           'positive')
+
+def demo(net, image_name, gt_boxes, result_dir, conf = 0.85):
     """Detect object classes in an image using pre-computed object proposals."""
 
     # Load the demo image
@@ -65,26 +71,37 @@ def demo(net, image_name, gt_boxes, result_dir, conf = 0.75):
         cls_ind += 1 # because we skipped background
         cls_boxes = boxes[:, 5*cls_ind:5*(cls_ind + 1)] # D
         cls_scores = scores[:, cls_ind]
+        #print scores
         dets = np.hstack((cls_boxes,
                           cls_scores[:, np.newaxis])).astype(np.float32)
         keep = rotate_gpu_nms(dets, NMS_THRESH) # D
         dets = dets[keep, :]
+        #print dets[0]
 	#dets = dets[0:20]
 	#dets[:, 4] = dets[:, 4] * 0.45
 
-	dets[:, 2] = dets[:, 2] / cfg.TEST.GT_MARGIN
-	dets[:, 3] = dets[:, 3] / cfg.TEST.GT_MARGIN
+    dets[:, 2] = dets[:, 2] / cfg.TEST.GT_MARGIN
+    dets[:, 3] = dets[:, 3] / cfg.TEST.GT_MARGIN
+    #print dets[0]
+
 
 	#if imdb_name == "icdar13":
 	#write_result_ICDAR2013(im_file, dets, CONF_THRESH, ori_result_dir, im_height, im_width)
 	#result_file = write_result_ICDAR2013(im_file, dets, CONF_THRESH, result_dir, im_height, im_width)
-	 
-        #print dets   
+
+        #print dets
 
 	#if imdb_name == "icdar15":
 	# write_result_ICDAR(im_file, dets, CONF_THRESH, ori_result_dir, im_height, im_width)
-	results = write_result_ICDAR(im_file, dets, CONF_THRESH, result_dir, im_height, im_width)
-	
+    results = write_result_ICDAR(im_file, dets, CONF_THRESH, result_dir, im_height, im_width)
+
+    print dets.shape
+    print [dets[:,5]]
+    print np.argmax(np.asarray([dets[:,5]]))
+
+    max_idx = np.argmax(np.asarray([dets[:,5]]))
+    #print max_idx
+
 	# write_result(im_file, dets, CONF_THRESH, ori_result_dir, im_height, im_width)
 	# result_file = write_result(im_file, dets, CONF_THRESH, result_dir, im_height, im_width)
 	# print "write done"
@@ -93,7 +110,7 @@ def demo(net, image_name, gt_boxes, result_dir, conf = 0.75):
 	#
 	#print "merge done"
         #vis_detections(im, cls, dets, gt_boxes, thresh=CONF_THRESH)
-	return results
+    return results,max_idx
 
 def multiscale_demo(net, im, gt_boxes, imdb_name, result_dir, ori_result_dir,left,top,right,bottom, conf = 0.75,device_id=0,):
     """Detect object classes in an image using pre-computed object proposals."""
@@ -108,9 +125,9 @@ def multiscale_demo(net, im, gt_boxes, imdb_name, result_dir, ori_result_dir,lef
     timer = Timer()
     timer.tic()
     h,w,c = im.shape
-    
+
     scores, boxes = rt_crop.r_im_detect(net, im[top:bottom,left:right])
-  
+
     #scores = np.hstack((scores,_scores))
     #boxes = np.hstack((boxes,_boxes))
     #idx = scores[:,1].argsort()
@@ -141,17 +158,17 @@ def multiscale_demo(net, im, gt_boxes, imdb_name, result_dir, ori_result_dir,lef
 
 def rrpn_test_crop(day, exp, model_name, mode, gpu_id):
 
-    
+
     roidb = get_MSRA(mode)
     im_names = []
     gt_boxes = []
-    
+
     for rdb in roidb:
 	im_names.append(rdb['image'])
 	gt_boxes.append([0,0,0,0,0])
     caffe.set_mode_gpu()
     caffe.set_device(gpu_id)
-    
+
     modelHome = "./data/faster_rcnn_models/" + day + "/" + exp
     prototxt = "./models/rrpn/VGG16/faster_rcnn_end2end/test.prototxt"
 
@@ -159,7 +176,7 @@ def rrpn_test_crop(day, exp, model_name, mode, gpu_id):
         os.makedirs("./result/" + day + "/" + exp + "/" + model_name + "/" + mode + "/")
 
     if not os.path.isdir("./result/" + day + "/" + exp + "/" + model_name + "/" + mode + "_origin/"):
-        os.makedirs("./result/" + day + "/" + exp + "/" + model_name + "/" + mode + "_origin/")    
+        os.makedirs("./result/" + day + "/" + exp + "/" + model_name + "/" + mode + "_origin/")
 
     imdb_name = "MSRA-TD500"
 
@@ -169,17 +186,17 @@ def rrpn_test_crop(day, exp, model_name, mode, gpu_id):
     output_dir = ""
 
     net = caffe.Net(prototxt, modelHome+'/'+model_name, caffe.TEST)
-    for im_idx in range(len(im_names)):	
+    for im_idx in range(len(im_names)):
     	im = cv2.imread(im_names[im_idx])
 	im_height =im.shape[0]
 	im_width = im.shape[1]
-        
+
 
 	dets = multiscale_demo(net, im, gt_boxes[im_idx], imdb_name, output_dir, output_dir,0,0,im_width,im_height,0.5,gpu_id)
 	#lt
 	_dets = multiscale_demo(net, im[0:im_height/2,0:im_width/2,:], gt_boxes[im_idx], imdb_name, output_dir, output_dir,0,0,im_width,im_height,0.5,gpu_id)
 	dets = np.vstack((dets,_dets))
-	#bt	
+	#bt
 	_dets = multiscale_demo(net, im[im_height/2:,0:im_width/2,:], gt_boxes[im_idx], imdb_name, output_dir, output_dir,0,0,im_width,im_height,0.5,gpu_id)
 	_dets[:,1]+=im_height/2
 	dets = np.vstack((dets,_dets))
@@ -222,15 +239,15 @@ def rrpn_test_crop(day, exp, model_name, mode, gpu_id):
 
 	dets[:, 2] = dets[:, 2] / cfg.TEST.GT_MARGIN
 	dets[:, 3] = dets[:, 3] / cfg.TEST.GT_MARGIN
-	
+
 	CONF_THRESH = 0.75
-		
+
 
         write_result(im_names[im_idx], dets, CONF_THRESH, ori_result_dir, im_height, im_width)
         result_file = write_result(im_names[im_idx], dets, CONF_THRESH, result_dir, im_height, im_width)
         print "write done"
-        post_merge(result_file) 
-    
+        post_merge(result_file)
+
 
 def post_merge(result_file):
 
@@ -240,19 +257,19 @@ def post_merge(result_file):
 	bbox = []
 	for line in lines:
 		record = line.strip().split(' ')
-		bbox.append([float(record[0]),float(record[1]),float(record[2]),float(record[3]),float(record[4]),float(record[5])])		
-	
+		bbox.append([float(record[0]),float(record[1]),float(record[2]),float(record[3]),float(record[4]),float(record[5])])
+
 	res = np.array(bbox)
 
 	res = merge(np.array(bbox))
-	
+
 	res = merge(np.array(res), 3.0, 1.3, 1.2, 1.0)
 	res = merge(np.array(res), 3.0, 1.3, 1.2, 1.0)
-	res = merge(np.array(res), 3.0, 1.3, 1.2, 1.0)	
-	res = merge(np.array(res), 3.0, 1.3, 1.2, 1.0)	
-	res = merge(np.array(res), 3.0, 1.3, 1.2, 1.0)	
+	res = merge(np.array(res), 3.0, 1.3, 1.2, 1.0)
+	res = merge(np.array(res), 3.0, 1.3, 1.2, 1.0)
+	res = merge(np.array(res), 3.0, 1.3, 1.2, 1.0)
 	f.close()
-	
+
 	g = open(result_file,'w+')
 	res = res.tolist()
 	for r in res:
@@ -264,13 +281,13 @@ def write_result_ICDAR(im_file, dets, threshold, result_dir, height, width):
     file_spl = im_file.split('/')
     file_name = file_spl[len(file_spl) - 1]
     file_name_arr = file_name.split(".")
-	
+
     file_name_str = file_name_arr[0]
 
     if not os.path.isdir(result_dir):
         os.makedirs(result_dir)
 
-    result = os.path.join(result_dir, "res_" + file_name_str + ".txt")    
+    result = os.path.join(result_dir, "res_" + file_name_str + ".txt")
 
     return_bboxes = []
 
@@ -279,6 +296,7 @@ def write_result_ICDAR(im_file, dets, threshold, result_dir, height, width):
     result_file = open(result, "w")
 
     result_str = ""
+
 
     for idx in range(len(dets)):
 	cx,cy,h,w,angle = dets[idx][0:5]
@@ -328,22 +346,22 @@ def write_result_ICDAR(im_file, dets, threshold, result_dir, height, width):
 
 
 	#rotated_pts = rotated_pts[:,0:2]
-	
+
 	if (dets[idx][5] > threshold):
 		rotated_pts = over_bound_handle(rotated_pts, height, width)
 		det_str = str(int(rotated_pts[0][0])) + "," + str(int(rotated_pts[0][1])) + "," + \
 		str(int(rotated_pts[1][0])) + "," + str(int(rotated_pts[1][1])) + "," + \
 	 	str(int(rotated_pts[2][0])) + "," + str(int(rotated_pts[2][1])) + "," + \
 	 	str(int(rotated_pts[3][0])) + "," + str(int(rotated_pts[3][1])) + "\r\n"
-	
+
 		result_str = result_str + det_str
 		return_bboxes.append(dets[idx])
 
 	#print rotated_pts.shape
 
-	
 
-	
+
+
     result_file.write(result_str)
     result_file.close()
 
@@ -354,10 +372,10 @@ def write_result_ICDAR2013(im_file, dets, threshold, result_dir, height, width):
     file_spl = im_file.split('/')
     file_name = file_spl[len(file_spl) - 1]
     file_name_arr = file_name.split(".")
-	
+
     file_name_str = file_name_arr[0]
 
-    result = os.path.join(result_dir, "res_" + file_name_str + ".txt")    
+    result = os.path.join(result_dir, "res_" + file_name_str + ".txt")
 
     if not os.path.isfile(result):
 	os.mknod(result)
@@ -420,10 +438,10 @@ def write_result_ICDAR2013(im_file, dets, threshold, result_dir, height, width):
 
 		result_str = result_str + det_str
 
-	
+
     	#print dets[idx][5], threshold
 
-	
+
     result_file.write(result_str)
     result_file.close()
 
@@ -443,6 +461,7 @@ def over_bound_handle(pts, img_height, img_width):
 
 def rot_pts(det):
     cx,cy,h,w,angle = det[0:5]
+    #w=150
     lt = [cx - w/2, cy - h/2,1]
     rt = [cx + w/2, cy - h/2,1]
     lb = [cx - w/2, cy + h/2,1]
@@ -477,14 +496,14 @@ def rot_pts(det):
 
     lt = np.argmin(rotated_pts, axis=0)
     rb = np.argmax(rotated_pts, axis=0)
-  
+
     left = rotated_pts[lt[0]]
     top = rotated_pts[lt[1]]
     right = rotated_pts[rb[0]]
     bottom = rotated_pts[rb[1]]
 
     return left, top, right, bottom
-    
+
 
 def write_result(im_file, dets, threshold, result_dir, im_height, im_width):
     #result_dir = "./result"
@@ -492,13 +511,13 @@ def write_result(im_file, dets, threshold, result_dir, im_height, im_width):
     file_name = file_spl[len(file_spl) - 1]
 
 
-    result = os.path.join(result_dir, file_name + ".result")    
+    result = os.path.join(result_dir, file_name + ".result")
     #print "result_name", result
 
     if not os.path.isfile(result):
 	os.mknod(result)
     result_file = open(result, "w")
-	    
+
     result_str = ""
     for det in dets:
 	det_str = ""
@@ -529,6 +548,57 @@ def parse_args():
 
     return args
 
+def save_rect_centers(im_name,top_rect):
+
+    basename = os.path.basename(im_name)
+    print basename
+    txt_filename = basename[:-5]+".txt"
+
+    try:
+        os.makedirs("./centers")
+    except Exception as ex:
+        print ex
+
+    full_path = os.path.join("./centers",txt_filename)
+    with open(full_path ,"w") as f:
+        if top_rect is not -1:
+            f.write("%.2f %.2f \n" % (top_rect[0],top_rect[1]))
+        else:
+            f.write("%.2f %.2f \n" % (0.0,0.0))
+
+
+def save_rects(im_name,top_rect):
+
+    basename = os.path.basename(im_name)
+    print basename
+    txt_filename = basename[:-5]+".txt"
+
+    try:
+        os.makedirs("./rects")
+    except Exception as ex:
+        print ex
+
+    full_path = os.path.join("./rects",txt_filename)
+
+    with open(full_path ,"w") as f:
+        if top_rect is not -1:
+            left,top,right,bottom = rot_pts(top_rect)
+            f.write("%.2f %.2f \n" % (right[0],right[1]))
+            f.write("%.2f %.2f \n" % (top[0],top[1]))
+            f.write("%.2f %.2f \n" % (left[0],left[1]))
+            f.write("%.2f %.2f \n" % (bottom[0],bottom[1]))
+            #f.write("%.2f %.2f \n" % (right[0],right[1]))
+            #f.write("%.2f %.2f \n" % (bottom[0],bottom[1]))
+            #f.write("%.2f %.2f \n" % (left[0],left[1]))
+            #f.write("%.2f %.2f \n" % (top[0],top[1]))
+        else:
+            f.write("%.2f %.2f \n" % (0.0,0.0))
+            f.write("%.2f %.2f \n" % (0.0,0.0))
+            f.write("%.2f %.2f \n" % (0.0,0.0))
+            f.write("%.2f %.2f \n" % (0.0,0.0))
+
+
+
 if __name__ == '__main__':
 
     NETS = {
@@ -538,7 +608,7 @@ if __name__ == '__main__':
                   'VGG16_faster_rcnn.caffemodel'),
         'zf': ('ZF',
                   'ZF_faster_rcnn.caffemodel')}
-    
+
     cfg.TEST.HAS_RPN = True  # Use RPN for proposals
 
     args = parse_args()
@@ -547,13 +617,15 @@ if __name__ == '__main__':
                             'faster_rcnn_alt_opt', 'faster_rcnn_test.pt')
     if args.demo_net == "rrpn":
 	prototxt = os.path.join(cfg.RRPN_MODELS_DIR, NETS[args.demo_net][0],
-                            'faster_rcnn_end2end', 'test.prototxt')
+                            'faster_rcnn_end2end', 'test_hakan_2.prototxt')
 
-    
 
+    #'vgg16_faster_rcnn_shuffle0_posneg_iter_90000.caffemodel
     print "prototxt",prototxt
     caffemodel = os.path.join(cfg.DATA_DIR, 'faster_rcnn_models',
-                              'vgg16_faster_rcnn.caffemodel')
+                              'vgg16_faster_rcnn_shuffle2_modanchors3_augmentation1_iter_25000.caffemodel')
+    #caffemodel = os.path.join(cfg.DATA_DIR, 'faster_rcnn_models',
+    #                          'vgg16_faster_rcnn_shuffle0_modanchors3_augmentation_iter_15000.caffemodel')
 
     print "caffemodel",caffemodel
     if not os.path.isfile(caffemodel):
@@ -576,21 +648,39 @@ if __name__ == '__main__':
         _, _= r_im_detect(net, im)
 
     im_names = []
-    gt_boxes = []	
-    
+    gt_boxes = []
+
     demo_dir = './data/demo'
     for img in os.listdir(demo_dir):
-	# im_names.append(rdb['image'])
-        # gt_boxes.append(rdb['boxes'])
-        im_names.append(os.path.join(demo_dir, img))
-        gt_boxes.append([0, 0, 0, 0, 0])
-        
+        print img
+        if os.path.isfile(os.path.join(demo_dir, img)):
+            im_names.append(os.path.join(demo_dir, img))
+            gt_boxes.append([0, 0, 0, 0, 0])
+
     # The detection results will save in cood_dir in txt
+    #print net.params.keys
+    #print net.blobs.keys
+    #sys.exit(0)
     cood_dir = "./result"
+    neg_count = 0
+    #os.removedirs("./rects")
+    #os.removedirs("./centers")
+    shutil.rmtree("./rects",ignore_errors=True)
+    shutil.rmtree("./centers",ignore_errors=True)
+
 
     for im_idx in range(len(im_names)):
         print '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
         print 'Demo for data/demo/{}'.format(im_names[im_idx])
-        vis_image(im_names[im_idx], demo(net, im_names[im_idx], gt_boxes[im_idx], cood_dir))
-
-    
+        results,max_idx=demo(net, im_names[im_idx], gt_boxes[im_idx], cood_dir,0.5)
+        print len(results)," max idx ", max_idx
+        #print results[max_idx]
+        #vis_image(im_names[im_idx], results,max_idx)
+        if max_idx != None and max_idx < len(results):
+            save_rect_centers(im_names[im_idx],results[max_idx])
+            save_rects(im_names[im_idx],results[max_idx])
+        else:
+            neg_count += 1
+            print neg_count
+            save_rect_centers(im_names[im_idx],-1)
+            save_rects(im_names[im_idx],-1)
